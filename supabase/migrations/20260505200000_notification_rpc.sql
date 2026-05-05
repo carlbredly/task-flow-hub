@@ -2,6 +2,7 @@
 -- to avoid RLS recursion on the tasks table subquery
 
 DROP POLICY IF EXISTS "notifications_insert_self" ON public.notifications;
+DROP POLICY IF EXISTS "notifications_insert_all" ON public.notifications;
 
 -- Allow any authenticated user to insert notifications (content is not sensitive)
 CREATE POLICY "notifications_insert_all" ON public.notifications
@@ -27,4 +28,4 @@ END;
 $$;
 
 -- Enable Realtime for the notifications table
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.notifications;

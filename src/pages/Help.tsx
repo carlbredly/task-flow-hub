@@ -1,3 +1,4 @@
+import SEO from "@/components/seo/SEO";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import {
@@ -119,7 +120,9 @@ const sections = [
 ];
 
 const HelpPage = () => (
-  <div className="mx-auto max-w-4xl space-y-6 px-3 py-4 animate-fade-in sm:p-6">
+  <>
+    <SEO title="Guide d'utilisation" description="Guide complet pour maîtriser Track'm : tableau de bord, tâches, Kanban, calendrier, équipe et paramètres." url="https://taskflowhub.app/help" />
+    <div className="mx-auto max-w-4xl space-y-6 px-3 py-4 animate-fade-in sm:p-6">
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Guide d'utilisation</h1>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -162,6 +165,7 @@ const HelpPage = () => (
       </p>
     </Card>
   </div>
+  </>
 );
 
 export default HelpPage;

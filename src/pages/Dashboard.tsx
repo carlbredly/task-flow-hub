@@ -1,8 +1,9 @@
+import SEO from "@/components/seo/SEO";
 import { useTasks } from "@/hooks/useTasks";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Clock, AlertTriangle, ListTodo, TrendingUp, Plus, Video, Pause, Square, Play } from "lucide-react";
 import { isPast, isToday, startOfWeek, isAfter, isFuture, format } from "date-fns";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -15,13 +16,6 @@ import { Progress } from "@/components/ui/progress";
 import type { Task } from "@/hooks/useTasks";
 import { cn } from "@/lib/utils";
 
-const tooltipStyle = {
-  background: "hsl(0 0% 100%)",
-  border: "1px solid hsl(220 14% 90%)",
-  borderRadius: 12,
-  boxShadow: "0 8px 24px -8px hsl(220 20% 10% / 0.12)",
-};
-
 const PRI_ORDER: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
 
 const rootTasks = (tasks: Task[]) => tasks.filter((t) => !t.parent_task_id);
@@ -33,7 +27,7 @@ function formatTimer(totalSec: number) {
   return [h, m, s].map((n) => String(n).padStart(2, "0")).join(":");
 }
 
-const WEEK_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
+const WEEK_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
 const Dashboard = () => {
   const { tasks, categories } = useTasks();
@@ -68,13 +62,14 @@ const Dashboard = () => {
         return d >= dayStart && d < dayEnd;
       }).length;
       const ratio = created > 0 ? Math.round((done / created) * 100) : 0;
-      return {
-        day: WEEK_LABELS[i],
-        ratio: Math.max(18, Math.min(100, ratio || (done > 0 ? 34 : 22))),
-        hasData: created > 0 || done > 0,
-      };
+      return { day: WEEK_LABELS[i], created, done, ratio, hasData: created > 0 || done > 0 };
     });
   }, [tasks]);
+
+  const maxAnalytics = useMemo(
+    () => Math.max(...projectAnalytics.map((d) => Math.max(d.created, d.done)), 1),
+    [projectAnalytics],
+  );
   const highlightedIndex = useMemo(() => {
     let idx = 0;
     let max = -1;
@@ -182,7 +177,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-4 pb-24 animate-fade-in sm:p-6 sm:pb-6">
+    <>
+      <SEO title="Tableau de bord" description="Vue d'ensemble de votre espace de travail : tâches actives, progression, rappels et collaboration d'équipe." url="https://taskflowhub.app/" />
+      <div className="mx-auto max-w-7xl space-y-6 p-4 pb-24 animate-fade-in sm:p-6 sm:pb-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div />
         <div className="flex flex-wrap gap-2">
@@ -203,7 +200,7 @@ const Dashboard = () => {
           </div>
           <div className="mt-3 text-3xl font-bold tracking-tight">{stats.active}</div>
           <p className="mt-2 flex items-center gap-1 text-[11px] text-primary-foreground/80">
-            <TrendingUp className="h-3 w-3" /> En cours dans l’espace
+            <TrendingUp className="h-3 w-3" /> En cours dans l'espace
           </p>
         </Card>
         <Card className="rounded-2xl border-border bg-card p-5 shadow-md">
@@ -232,50 +229,79 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-      <Card className="max-h-[300px] rounded-2xl border border-border bg-card p-5 shadow-md lg:col-span-2">
-          <h3 className="text-sm font-semibold">Analyse projet</h3>
-
-          <div className="grid grid-cols-7 items-end gap-3">
-            {projectAnalytics.map((x, i) => {
-              const isHighlighted = i === highlightedIndex && x.hasData;
-              const isFilled = x.hasData;
-
-              // Sécuriser la valeur
-              const ratio = Math.min(Math.max(x.ratio, 0), 100);
-
-              return (
-                <div key={`${x.day}-${i}`} className="flex flex-col justify-between">
-                  <div className="relative flex h-28 items-end">
-                    {isHighlighted && (
-                      <span className="absolute -top-1 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-sm">
-                        {ratio}%
-                      </span>
-                    )}
-
-                    <div
-                      className="w-10 rounded-full transition-all duration-300"
-                      style={{
-                        height: `${ratio}%`,
-                        background: isFilled
-                          ? isHighlighted
-                            ? "hsl(152 51% 59%)"
-                            : "hsl(145 55% 23%)"
-                          : "repeating-linear-gradient(135deg, hsl(200 10% 72%) 0px, hsl(200 10% 72%) 3px, transparent 3px, transparent 7px)",
-                        opacity: isFilled ? 1 : 0.8,
-                      }}
-                    />
-                  </div>
-
-                  <span className="mt-2 text-xs text-muted-foreground">
-                    {x.day}
-                  </span>
-                </div>
-              );
-            })}
+      {/* Row 1: Analyse · Rappels · Projets */}
+      <div className="grid gap-4 lg:grid-cols-5">
+        <Card className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-md lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Analyse projet</h3>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <span className="h-2 w-2 rounded-full bg-[#38BDF8]" />
+                Créées
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <span className="h-2 w-2 rounded-full bg-[#F59E0B]" />
+                Terminées
+              </span>
+            </div>
+          </div>
+          <div className="mt-auto">
+            <ResponsiveContainer width="100%" height={180}>
+              <AreaChart data={projectAnalytics} margin={{ top: 12, right: 4, left: 4, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="createdGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#38BDF8" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#38BDF8" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="doneGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#F59E0B" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="rgba(255,255,255,0.07)" strokeDasharray="2 3" vertical={false} />
+                <XAxis dataKey="day" axisLine={{ stroke: "rgba(255,255,255,0.08)" }} tickLine={{ stroke: "rgba(255,255,255,0.08)" }} tick={{ fontSize: 11, fill: "rgba(255,255,255,0.4)" }} />
+                <Tooltip
+                  contentStyle={{
+                    background: "#1a1a2e",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 10,
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                    fontSize: 12,
+                  }}
+                  labelStyle={{ color: "rgba(255,255,255,0.9)", fontWeight: 600, marginBottom: 4 }}
+                  itemStyle={{ color: "rgba(255,255,255,0.75)", padding: "1px 0" }}
+                  formatter={(value: number, name: string) => [value, name === "created" ? "Créées" : "Terminées"]}
+                />
+                <Area type="monotone" dataKey="created" stroke="#38BDF8" strokeWidth={2} fill="url(#createdGrad)" dot={{ r: 2.5, fill: "#38BDF8", stroke: "#0A0A0F", strokeWidth: 1.5 }} activeDot={{ r: 4, fill: "#38BDF8", stroke: "#0A0A0F", strokeWidth: 2 }} />
+                <Area type="monotone" dataKey="done" stroke="#F59E0B" strokeWidth={2.5} fill="url(#doneGrad)" dot={{ r: 2.5, fill: "#F59E0B", stroke: "#0A0A0F", strokeWidth: 1.5 }} activeDot={{ r: 4, fill: "#F59E0B", stroke: "#0A0A0F", strokeWidth: 2 }} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </Card>
-        <Card className="flex h-[500px] flex-col rounded-2xl border-border bg-card p-5 shadow-md">
+
+        <Card className="flex flex-col rounded-2xl border-border bg-card p-5 shadow-md">
+          <h3 className="text-sm font-semibold">Rappels</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Prochaine échéance</p>
+          {nextReminder ? (
+            <div className="mt-3 flex flex-1 flex-col">
+              <div className="rounded-xl border border-border bg-muted/30 p-3">
+                <p className="text-sm font-medium text-foreground leading-snug line-clamp-2">{nextReminder.title}</p>
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5 shrink-0" />
+                  {nextReminder.due_date && format(new Date(nextReminder.due_date), "d MMM · HH:mm")}
+                </p>
+              </div>
+              <Button className="mt-auto w-full rounded-xl gap-1.5" onClick={() => openTaskPanel(nextReminder.id)} type="button" size="sm">
+                <Video className="h-3.5 w-3.5" />
+                Ouvrir
+              </Button>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-muted-foreground">Aucun rappel à venir.</p>
+          )}
+        </Card>
+
+        <Card className="flex flex-col rounded-2xl border-border bg-card p-5 shadow-md lg:col-span-2 max-h-[250px]">
           <div className="flex shrink-0 items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold">Projets & priorités</h3>
@@ -287,7 +313,7 @@ const Dashboard = () => {
               </Link>
             </Button>
           </div>
-          <ul className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-thin">
+          <ul className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto scrollbar-thin">
             {projectList.length === 0 && <li className="text-sm text-muted-foreground">Rien en cours — bravo !</li>}
             {projectList.map((t) => {
               const cat = catFor(t.category_id);
@@ -296,19 +322,18 @@ const Dashboard = () => {
                   <button
                     type="button"
                     onClick={() => openTaskPanel(t.id)}
-                    className="flex w-full items-start gap-3 rounded-xl border border-transparent px-2 py-2 text-left transition-colors hover:border-border hover:bg-muted/40"
+                    className="flex w-full items-start gap-2.5 rounded-xl border border-transparent px-2 py-1.5 text-left transition-colors hover:border-border hover:bg-muted/40"
                   >
                     <span
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-center text-sm font-medium text-white/50"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-center text-xs font-medium text-white/50"
                       style={{ background: cat?.color ?? "hsl(220 14% 80%)" }} 
                     >
                       {cat?.name?.slice(0,1).toUpperCase()}
                     </span>
-               
                     <div className="min-w-0 flex-1">
-                      <span className="line-clamp-2 text-sm font-medium text-foreground">{t.title}</span>
+                      <span className="line-clamp-2 text-xs font-medium text-foreground">{t.title}</span>
                       {t.due_date && (
-                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                        <span className="mt-0.5 block text-[11px] text-muted-foreground">
                           {format(new Date(t.due_date), "d MMM yyyy")}
                         </span>
                       )}
@@ -321,95 +346,12 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      
-
-      {/* Rappels & Progression */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="flex flex-col rounded-2xl border-border bg-card p-5 shadow-md lg:col-span-2">
-          <h3 className="text-sm font-semibold">Rappels</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Prochaine échéance à venir</p>
-          {nextReminder ? (
-            <>
-              <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
-                <p className="font-medium text-foreground">{nextReminder.title}</p>
-                <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4 shrink-0" />
-                  {nextReminder.due_date && format(new Date(nextReminder.due_date), "d MMM yyyy · HH:mm")}
-                </p>
-              </div>
-              <Button
-                className="mt-4 w-full rounded-xl gap-2"
-                onClick={() => openTaskPanel(nextReminder.id)}
-                type="button"
-              >
-                <Video className="h-4 w-4" />
-                Ouvrir la tâche
-              </Button>
-            </>
-          ) : (
-            <p className="mt-6 flex-1 text-sm text-muted-foreground">Aucun rappel à venir. Ajoutez une date d’échéance à vos tâches.</p>
-          )}
-        </Card>
-
-        <Card className=" rounded-2xl border-border bg-card p-5 shadow-md">
-          <h3 className="text-sm font-semibold">Progression du workspace</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Tâches racines terminées</p>
-          {workspaceProgress.total > 0 ? (
-            <div className="relative mx-auto mt-2 h-44 w-full max-w-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={gaugeData}
-                    dataKey="value"
-                    cx="50%"
-                    cy="85%"
-                    startAngle={180}
-                    endAngle={0}
-                    innerRadius={58}
-                    outerRadius={78}
-                    stroke="none"
-                  >
-                    {gaugeData.map((_, i) => (
-                      <Cell key={i} fill={gaugeData[i].fill} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-end pb-1 text-center">
-                <span className="text-3xl font-bold tabular-nums text-foreground">{workspaceProgress.pct}%</span>
-                <span className="text-[11px] text-muted-foreground">tâches terminées</span>
-              </div>
-            </div>
-          ) : null}
-          {workspaceProgress.total > 0 && (
-            <div className="mt-2 space-y-2">
-              <Progress value={workspaceProgress.pct} className="h-2 bg-muted" />
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-[hsl(145_55%_28%)]" />
-                  Terminé ({workspaceProgress.done})
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-[hsl(217_91%_55%)]" />
-                  En cours ({workspaceProgress.inProgress})
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-[hsl(210_18%_88%)]" />
-                  À faire ({workspaceProgress.pending + workspaceProgress.delayed})
-                </span>
-              </div>
-            </div>
-          )}
-          {workspaceProgress.total === 0 && <p className="mt-4 text-sm text-muted-foreground">Créez des tâches pour suivre la progression.</p>}
-        </Card>
-      </div>
-      
-      {/* Collaboration & minuteur */}
-      <div className="w-2/3 mx-auto grid gap-4 lg:grid-cols-5">
+      {/* Row 2: Collaboration · Progression · Minuteur */}
+      <div className="grid gap-4 lg:grid-cols-5">
         <Card className="rounded-2xl border-border bg-card p-5 shadow-md lg:col-span-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-semibold">Collaboration d’équipe</h3>
+              <h3 className="text-sm font-semibold">Collaboration d'équipe</h3>
               <p className="text-xs text-muted-foreground">Membres et tâche en cours</p>
             </div>
             <Button variant="outline" size="sm" className="rounded-xl" asChild>
@@ -447,46 +389,87 @@ const Dashboard = () => {
           </div>
         </Card>
 
-        <Card className=" overflow-hidden rounded-2xl border-0 bg-primary p-6 text-primary-foreground shadow-lg lg:col-span-2">
-          <div
-            className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute -bottom-10 left-1/4 h-40 w-40 rounded-full bg-white/5"
-            aria-hidden
-          />
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-md">
+          <h3 className="text-sm font-semibold">Progression</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Tâches racines terminées</p>
+          {workspaceProgress.total > 0 ? (
+            <div className="relative mx-auto mt-2 h-36 w-full max-w-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={gaugeData}
+                    dataKey="value"
+                    cx="50%"
+                    cy="85%"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={48}
+                    outerRadius={65}
+                    stroke="none"
+                  >
+                    {gaugeData.map((_, i) => (
+                      <Cell key={i} fill={gaugeData[i].fill} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-end pb-1 text-center">
+                <span className="text-2xl font-bold tabular-nums text-foreground">{workspaceProgress.pct}%</span>
+                <span className="text-[10px] text-muted-foreground">terminées</span>
+              </div>
+            </div>
+          ) : null}
+          {workspaceProgress.total > 0 && (
+            <div className="mt-1 space-y-1.5">
+              <Progress value={workspaceProgress.pct} className="h-1.5 bg-muted" />
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[hsl(145_55%_28%)]" />
+                  {workspaceProgress.done}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[hsl(217_91%_55%)]" />
+                  {workspaceProgress.inProgress}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[hsl(210_18%_88%)]" />
+                  {workspaceProgress.pending + workspaceProgress.delayed}
+                </span>
+              </div>
+            </div>
+          )}
+          {workspaceProgress.total === 0 && <p className="mt-4 text-sm text-muted-foreground">Créez des tâches pour suivre la progression.</p>}
+        </Card>
+
+        <Card className="overflow-hidden rounded-2xl border-0 bg-primary p-5 text-primary-foreground shadow-lg">
+          <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" aria-hidden />
+          <div className="pointer-events-none absolute -bottom-8 left-1/4 h-32 w-32 rounded-full bg-white/5" aria-hidden />
           <h3 className="relative text-sm font-semibold text-primary-foreground">Minuteur</h3>
-          <p className="relative mt-1 text-xs text-primary-foreground/80">Session de focus locale</p>
-          <p className="relative mt-6 text-center font-mono text-4xl font-semibold tabular-nums tracking-tight">
+          <p className="relative mt-1 text-xs text-primary-foreground/80">Focus local</p>
+          <p className="relative mt-4 text-center font-mono text-3xl font-semibold tabular-nums tracking-tight">
             {formatTimer(timerSec)}
           </p>
-          <div className="relative mt-6 flex justify-center gap-3">
-            <Button
-              type="button"
-              size="icon"
-              variant="secondary"
-              className="h-12 w-12 rounded-full border-0 bg-white/20 text-primary-foreground hover:bg-white/30"
+          <div className="relative mt-4 flex justify-center gap-2">
+            <Button type="button" size="icon" variant="secondary"
+              className="h-10 w-10 rounded-full border-0 bg-white/20 text-primary-foreground hover:bg-white/30"
               onClick={() => setTimerRunning((r) => !r)}
               aria-label={timerRunning ? "Pause" : "Démarrer"}
             >
-              {timerRunning ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+              {timerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
             </Button>
-            <Button
-              type="button"
-              size="icon"
-              variant="secondary"
-              className="h-12 w-12 rounded-full border-0 bg-destructive/90 text-destructive-foreground hover:bg-destructive"
+            <Button type="button" size="icon" variant="secondary"
+              className="h-10 w-10 rounded-full border-0 bg-destructive/90 text-destructive-foreground hover:bg-destructive"
               onClick={stopTimer}
-              aria-label="Arrêter et réinitialiser"
+              aria-label="Arrêter"
             >
-              <Square className="h-4 w-4" />
+              <Square className="h-3.5 w-3.5" />
             </Button>
           </div>
         </Card>
       </div>
       <TaskCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
+    </>
   );
 };
 

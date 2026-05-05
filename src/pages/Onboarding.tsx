@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import SEO from "@/components/seo/SEO";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
@@ -44,7 +45,9 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <>
+      <SEO title="Bienvenue" description="Créez votre premier espace de travail Track'm et commencez à organiser vos tâches." noindex />
+      <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="surface-card w-full max-w-md border-white/5 p-6">
         <h1 className="text-xl font-semibold">Welcome to Track'm</h1>
         <p className="mt-1 text-sm text-muted-foreground">Create your first workspace to get started.</p>
@@ -57,6 +60,7 @@ const Onboarding = () => {
         </div>
       </Card>
     </div>
+    </>
   );
 };
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import SEO from "@/components/seo/SEO";
 import { useTasks } from "@/hooks/useTasks";
 import { Search, LayoutList, Columns3, CalendarDays, GanttChart, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -88,7 +89,9 @@ const Tasks = () => {
   const extraMembers = Math.max(0, members.length - 5);
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-5 p-4 pb-24 animate-fade-in sm:p-6 sm:pb-6">
+    <>
+      <SEO title="Tâches" description="Gérez vos tâches en vue liste, Kanban, calendrier ou Gantt. Filtrez par catégorie, statut, priorité et assignation." url="https://taskflowhub.app/tasks" />
+      <div className="mx-auto max-w-[1600px] space-y-5 p-4 pb-24 animate-fade-in sm:p-6 sm:pb-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-1 shadow-sm">
           <button
@@ -280,6 +283,7 @@ const Tasks = () => {
       )}
       <TaskCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
+    </>
   );
 };
 

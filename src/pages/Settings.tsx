@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import SEO from "@/components/seo/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppStore } from "@/stores/useAppStore";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
@@ -136,7 +137,9 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-3 py-4 animate-fade-in sm:p-6">
+    <>
+      <SEO title="Paramètres" description="Gérez votre profil, workspace, membres, catégories et notifications Track'm." url="https://taskflowhub.app/settings" />
+      <div className="mx-auto max-w-6xl px-3 py-4 animate-fade-in sm:p-6">
       <Tabs defaultValue="profile" className="space-y-4">
         <div className="overflow-x-auto scrollbar-thin">
           <TabsList className="inline-flex w-max min-w-full gap-1 bg-transparent p-0">
@@ -332,6 +335,7 @@ const SettingsPage = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </>
   );
 };
 

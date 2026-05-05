@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import SEO from "@/components/seo/SEO";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ const schema = z.object({
 
 const Auth = () => {
   const nav = useNavigate();
+  const loc = useLocation();
+  const from = (loc.state as { from?: string })?.from ?? "/";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,18 +36,20 @@ const Auth = () => {
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success(mode === "signup" ? "Account created" : "Welcome back");
-    nav("/", { replace: true });
+    nav(from, { replace: true });
   };
 
   const handleGoogle = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}${from}` });
     if (result.error) toast.error("Google sign-in failed");
     if (result.redirected) return;
-    nav("/", { replace: true });
+    nav(from, { replace: true });
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <>
+      <SEO title="Connexion" description="Connectez-vous ou créez un compte Track'm pour gérer vos tâches en équipe." url="https://taskflowhub.app/auth" />
+      <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex items-center justify-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl glow-primary" style={{ background: "var(--gradient-primary)" }}>
@@ -87,6 +92,7 @@ const Auth = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

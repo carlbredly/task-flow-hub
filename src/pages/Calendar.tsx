@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import SEO from "@/components/seo/SEO";
 import { format, getDay, getDaysInMonth, startOfMonth, addMonths, subMonths, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useTasks } from "@/hooks/useTasks";
@@ -81,7 +82,9 @@ const CalendarPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-3 py-4 animate-fade-in sm:p-6">
+    <>
+      <SEO title="Calendrier" description="Calendrier mensuel des tâches avec navigation, export iCal et import dans votre calendrier téléphone." url="https://taskflowhub.app/calendar" />
+      <div className="mx-auto max-w-6xl space-y-5 px-3 py-4 animate-fade-in sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Calendar view</h2>
@@ -181,6 +184,7 @@ const CalendarPage = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

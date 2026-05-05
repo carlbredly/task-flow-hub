@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import SEO from "@/components/seo/SEO";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { BellRing, CheckCheck, Filter } from "lucide-react";
@@ -19,7 +20,9 @@ const NotificationsPage = () => {
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5 p-6 animate-fade-in">
+    <>
+      <SEO title="Notifications" description="Notifications en temps réel de votre espace de travail Track'm : rappels, échéances et activité d'équipe." url="https://taskflowhub.app/notifications" />
+      <div className="mx-auto max-w-5xl space-y-5 p-6 animate-fade-in">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Notifications</h2>
@@ -90,6 +93,7 @@ const NotificationsPage = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

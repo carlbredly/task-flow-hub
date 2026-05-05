@@ -240,11 +240,11 @@ export const TaskPanel = () => {
     const newList = [...(draft.assigned_to ?? []), uid];
     await update({ assigned_to: newList });
     const { error: notifErr } = await (supabase.rpc as any)("insert_notification", {
-      _user_id: uid,
-      _title: "Vous avez été assigné à une tâche",
-      _message: draft.title,
-      _type: "assignation",
-      _task_id: draft.id,
+      p_user_id: uid,
+      p_title: "Vous avez été assigné à une tâche",
+      p_message: draft.title,
+      p_type: "assignation",
+      p_task_id: draft.id,
     });
     if (notifErr) console.error("Notification insert failed:", notifErr);
   };

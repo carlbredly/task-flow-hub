@@ -351,10 +351,10 @@ export const TaskPanel = () => {
 
   return (
     <Sheet open={!!taskPanelOpenId} onOpenChange={(o) => !o && openTaskPanel(null)}>
-        <SheetContent className="flex w-full flex-col border-l border-border bg-card sm:max-w-lg">
-        <SheetHeader className="shrink-0">
+        <SheetContent className="flex w-full flex-col gap-0 border-l border-border bg-card sm:max-w-lg">
+        <SheetHeader className="shrink-0 px-5 pt-5 pb-0">
           <SheetTitle className="sr-only">Task details</SheetTitle>
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 pr-6">
             <Input
               value={draft.title}
               onChange={(e) => setDraft({ ...draft, title: e.target.value })}
@@ -374,8 +374,8 @@ export const TaskPanel = () => {
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full space-y-5 overflow-y-auto pr-2 scrollbar-thin">
+        <div className="min-h-0 flex-1 overflow-hidden px-5">
+          <div className="h-full space-y-5 overflow-y-auto pr-1 scrollbar-thin">
           {/* Tags */}
           <div className="flex flex-wrap items-center gap-1.5">
             {taskTags.map((t) => (

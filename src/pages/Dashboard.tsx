@@ -1,7 +1,7 @@
 import SEO from "@/components/seo/SEO";
 import { useTasks } from "@/hooks/useTasks";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, Clock, AlertTriangle, ListTodo, TrendingUp, Plus, Video, Pause, Square, Play } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, ListTodo, TrendingUp, Plus, Video, Pause, Square, Play, Target } from "lucide-react";
 import { isPast, isToday, startOfWeek, isAfter, isFuture, format } from "date-fns";
 import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
 import { useMemo, useState, useEffect, useCallback } from "react";
@@ -13,6 +13,8 @@ import { useWorkspaceMembers } from "@/hooks/useWorkspaceMembers";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import type { Task } from "@/hooks/useTasks";
 import { cn } from "@/lib/utils";
 
@@ -146,6 +148,8 @@ const Dashboard = () => {
 
   const [timerSec, setTimerSec] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [timerTaskId, setTimerTaskId] = useState<string | null>(null);
+  const [timerSelectOpen, setTimerSelectOpen] = useState(false);
 
   useEffect(() => {
     if (!timerRunning) return;
@@ -153,10 +157,30 @@ const Dashboard = () => {
     return () => window.clearInterval(id);
   }, [timerRunning]);
 
-  const stopTimer = useCallback(() => {
+  const startTimer = useCallback(() => {
+    if (!timerTaskId) {
+      setTimerSelectOpen(true);
+      return;
+    }
+    setTimerRunning(true);
+  }, [timerTaskId]);
+
+  const stopTimer = useCallback(async () => {
+    if (timerRunning && timerSec > 0 && timerTaskId) {
+      await (supabase.rpc as any)("add_time_spent", { task_id: timerTaskId, seconds: timerSec });
+    }
     setTimerRunning(false);
     setTimerSec(0);
+    setTimerTaskId(null);
+  }, [timerRunning, timerSec, timerTaskId]);
+
+  const selectTimerTask = useCallback((taskId: string) => {
+    setTimerTaskId(taskId);
+    setTimerSelectOpen(false);
+    setTimerRunning(true);
   }, []);
+
+  const timerTask = timerTaskId ? tasks.find((t) => t.id === timerTaskId) : null;
 
   const statusBadge = (status: Task["status"] | null) => {
     if (!status) {
@@ -445,15 +469,22 @@ const Dashboard = () => {
           <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" aria-hidden />
           <div className="pointer-events-none absolute -bottom-8 left-1/4 h-32 w-32 rounded-full bg-white/5" aria-hidden />
           <h3 className="relative text-sm font-semibold text-primary-foreground">Minuteur</h3>
-          <p className="relative mt-1 text-xs text-primary-foreground/80">Focus local</p>
+          {timerTask ? (
+            <p className="relative mt-1 truncate text-xs text-primary-foreground/80" title={timerTask.title}>
+              <Target className="-mt-0.5 mr-1 inline h-3 w-3" />
+              {timerTask.title}
+            </p>
+          ) : (
+            <p className="relative mt-1 text-xs text-primary-foreground/80">Sélectionnez une tâche</p>
+          )}
           <p className="relative mt-4 text-center font-mono text-3xl font-semibold tabular-nums tracking-tight">
             {formatTimer(timerSec)}
           </p>
           <div className="relative mt-4 flex justify-center gap-2">
             <Button type="button" size="icon" variant="secondary"
               className="h-10 w-10 rounded-full border-0 bg-white/20 text-primary-foreground hover:bg-white/30"
-              onClick={() => setTimerRunning((r) => !r)}
-              aria-label={timerRunning ? "Pause" : "Démarrer"}
+              onClick={timerRunning ? () => setTimerRunning(false) : startTimer}
+              aria-label={timerRunning ? "Pause" : timerTaskId ? "Reprendre" : "Démarrer"}
             >
               {timerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
             </Button>
@@ -467,6 +498,38 @@ const Dashboard = () => {
           </div>
         </Card>
       </div>
+
+      <Dialog open={timerSelectOpen} onOpenChange={setTimerSelectOpen}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Sélectionner une tâche</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-72 space-y-1 overflow-y-auto">
+            {rootTasks(tasks)
+              .filter((t) => t.status !== "done")
+              .map((t) => {
+                const cat = categories.find((c) => c.id === t.category_id);
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => selectTimerTask(t.id)}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
+                  >
+                    <span
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium text-white/50"
+                      style={{ background: cat?.color ?? "hsl(220 14% 80%)" }}
+                    >
+                      {cat?.name?.slice(0, 1).toUpperCase() ?? "?"}
+                    </span>
+                    <span className="min-w-0 flex-1 text-sm font-medium text-foreground">{t.title}</span>
+                  </button>
+                );
+              })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <TaskCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
     </>

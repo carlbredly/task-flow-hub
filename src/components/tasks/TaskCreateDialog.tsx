@@ -36,7 +36,7 @@ interface Template {
 export const TaskCreateDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => {
   const { currentWorkspace } = useAppStore();
   const { user } = useAuth();
-  const { categories } = useTasks();
+  const { categories, refetch } = useTasks();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
@@ -108,6 +108,7 @@ export const TaskCreateDialog = ({ open, onOpenChange }: { open: boolean; onOpen
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Tâche créée");
+    refetch();
     reset();
     onOpenChange(false);
   };

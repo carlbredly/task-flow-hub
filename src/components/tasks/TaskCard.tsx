@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { Task, Category } from "@/hooks/useTasks";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import type { WorkspaceMemberWithProfile } from "@/hooks/useWorkspaceMembers";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarClock, MapPin, ListTree } from "lucide-react";
+import { CalendarClock, MapPin, ListTree, User } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/stores/useAppStore";
@@ -19,17 +20,23 @@ interface Props {
   task: Task;
   category?: Category;
   subtaskStats?: { done: number; total: number };
-  /** Poignée drag-and-drop */
   leadingSlot?: ReactNode;
   variant?: "list" | "board";
+  members?: WorkspaceMemberWithProfile[];
 }
 
-export const TaskCard = ({ task, category, subtaskStats, leadingSlot, variant = "list" }: Props) => {
+export const TaskCard = ({ task, category, subtaskStats, leadingSlot, variant = "list", members }: Props) => {
   const { openTaskPanel } = useAppStore();
   const overdue = task.due_date && isPast(new Date(task.due_date)) && task.status !== "done";
 
   const toggleDone = async (checked: boolean) => {
     await supabase.from("tasks").update({ status: checked ? "done" : "todo" }).eq("id", task.id);
+  };
+
+  const memberFor = (uid: string) => members?.find((m) => m.user_id === uid);
+  const displayName = (uid: string) => {
+    const m = memberFor(uid);
+    return m?.profile?.display_name ?? m?.profile?.email ?? uid.slice(0, 8);
   };
 
   if (variant === "board") {
@@ -89,13 +96,18 @@ export const TaskCard = ({ task, category, subtaskStats, leadingSlot, variant = 
         </div>
         <div className="flex justify-end border-t border-border/60 pt-2">
           <div className="flex -space-x-2">
-            {(task.assigned_to ?? []).slice(0, 4).map((uid) => (
-              <Avatar key={uid} className="h-7 w-7 border-2 border-card">
-                <AvatarFallback className="bg-primary/10 text-[10px] font-medium text-primary">
-                  {uid.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            ))}
+            {(task.assigned_to ?? []).slice(0, 4).map((uid) => {
+              const m = memberFor(uid);
+              const name = displayName(uid);
+              return (
+                <Avatar key={uid} className="h-7 w-7 border-2 border-card" title={name}>
+                  <AvatarImage src={m?.profile?.avatar_url ?? undefined} />
+                  <AvatarFallback className="bg-primary/10 text-[10px] font-medium text-primary">
+                    {name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -143,11 +155,16 @@ export const TaskCard = ({ task, category, subtaskStats, leadingSlot, variant = 
           </div>
         </div>
         <div className="flex shrink-0 -space-x-2">
-          {(task.assigned_to ?? []).slice(0, 3).map((uid) => (
-            <Avatar key={uid} className="h-6 w-6 border-2 border-card">
-              <AvatarFallback className="bg-primary/10 text-[10px] text-primary">{uid.slice(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-          ))}
+          {(task.assigned_to ?? []).slice(0, 3).map((uid) => {
+            const m = memberFor(uid);
+            const name = displayName(uid);
+            return (
+              <Avatar key={uid} className="h-6 w-6 border-2 border-card" title={name}>
+                <AvatarImage src={m?.profile?.avatar_url ?? undefined} />
+                <AvatarFallback className="bg-primary/10 text-[10px] text-primary">{name.slice(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            );
+          })}
         </div>
       </button>
     </div>

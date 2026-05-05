@@ -279,6 +279,7 @@ const Tasks = () => {
           refetch={refetch}
           subtaskStats={subtaskStats}
           layout={layoutMode}
+          members={members}
         />
       )}
       <TaskCreateDialog open={createOpen} onOpenChange={setCreateOpen} />

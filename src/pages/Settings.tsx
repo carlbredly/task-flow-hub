@@ -14,6 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Eye, EyeOff, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -210,45 +214,43 @@ const SettingsPage = () => {
 
         <TabsContent value="members">
           <Card className="space-y-4 border-white/5 p-5">
-            <h3 className="text-sm font-semibold">Members</h3>
+            <h3 className="text-sm font-semibold">Membres</h3>
             <div className="space-y-3">
-              {members.map((member) => (
-                <div key={member.id} className="rounded-lg border border-white/5 p-3">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-sm font-medium">{member.profile?.display_name ?? member.profile?.email ?? member.user_id}</p>
-                      <p className="text-xs text-muted-foreground">{member.profile?.email ?? member.user_id}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Select value={member.role} onValueChange={(value) => updateMemberRole(member.id, value as typeof member.role)}>
-                        <SelectTrigger className="w-[120px] text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="owner">owner</SelectItem>
-                          <SelectItem value="admin">admin</SelectItem>
-                          <SelectItem value="editor">editor</SelectItem>
-                          <SelectItem value="viewer">viewer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() =>
-                          updateVisibleCategories(
-                            member.id,
-                            member.visible_categories.includes("all") ? categories.map((category) => category.name) : ["all"],
-                          )
-                        }
-                      >
-                        Toggle visibility
-                      </Button>
+              {members.map((member) => {
+                const isAll = member.visible_categories.includes("all");
+                const catCount = isAll ? categories.length : member.visible_categories.length;
+                return (
+                  <div key={member.id} className="rounded-lg border border-white/5 p-3">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="text-sm font-medium">{member.profile?.display_name ?? member.profile?.email ?? member.user_id}</p>
+                        <p className="text-xs text-muted-foreground">{member.profile?.email ?? member.user_id}</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Select value={member.role} onValueChange={(value) => updateMemberRole(member.id, value as typeof member.role)}>
+                          <SelectTrigger className="w-[120px] text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="owner">owner</SelectItem>
+                            <SelectItem value="admin">admin</SelectItem>
+                            <SelectItem value="editor">editor</SelectItem>
+                            <SelectItem value="viewer">viewer</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <CategoryVisibilityPopover
+                          memberId={member.id}
+                          categories={categories}
+                          visibleCategories={member.visible_categories}
+                          onSave={updateVisibleCategories}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {members.length === 0 && <p className="text-sm text-muted-foreground">No members yet.</p>}
+                );
+              })}
+              {members.length === 0 && <p className="text-sm text-muted-foreground">Aucun membre pour cet espace.</p>}
             </div>
           </Card>
         </TabsContent>
@@ -336,6 +338,88 @@ const SettingsPage = () => {
       </AlertDialog>
     </div>
     </>
+  );
+};
+
+const CategoryVisibilityPopover = ({
+  memberId,
+  categories,
+  visibleCategories,
+  onSave,
+}: {
+  memberId: string;
+  categories: { id: string; name: string; color: string }[];
+  visibleCategories: string[];
+  onSave: (memberId: string, cats: string[]) => Promise<void>;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<string[]>(visibleCategories);
+  const [saving, setSaving] = useState(false);
+
+  const isAll = selected.includes("all");
+
+  const toggleAll = () => {
+    setSelected(isAll ? [] : ["all"]);
+  };
+
+  const toggleCategory = (name: string) => {
+    setSelected((prev) => {
+      const next = prev.includes(name) ? prev.filter((c) => c !== name) : [...prev.filter((c) => c !== "all"), name];
+      return next.length === 0 ? ["all"] : next;
+    });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave(memberId, selected);
+    setSaving(false);
+    setOpen(false);
+    toast.success("Visibilité des catégories mise à jour");
+  };
+
+  const label = isAll ? "Toutes les catégories" : `${selected.length} catégorie${selected.length > 1 ? "s" : ""}`;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="text-xs gap-1.5">
+          {isAll ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+          {label}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-3" align="end">
+        <p className="mb-2 text-xs font-medium text-muted-foreground">Catégories visibles</p>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/40 cursor-pointer text-sm">
+            <Checkbox checked={isAll} onCheckedChange={toggleAll} />
+            <span className={cn(isAll ? "font-medium text-foreground" : "text-muted-foreground")}>
+              Toutes les catégories
+            </span>
+          </label>
+          <div className="border-t border-border pt-1.5 space-y-0.5">
+            {categories.map((cat) => (
+              <label
+                key={cat.id}
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/40 cursor-pointer text-sm"
+              >
+                <Checkbox
+                  checked={isAll || selected.includes(cat.name)}
+                  onCheckedChange={() => toggleCategory(cat.name)}
+                  disabled={isAll}
+                />
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full" style={{ background: cat.color }} />
+                  <span className={cn(isAll ? "text-muted-foreground" : "text-foreground")}>{cat.name}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <Button size="sm" className="mt-3 w-full rounded-xl" onClick={handleSave} disabled={saving}>
+          {saving ? "Enregistrement…" : "Appliquer"}
+        </Button>
+      </PopoverContent>
+    </Popover>
   );
 };
 

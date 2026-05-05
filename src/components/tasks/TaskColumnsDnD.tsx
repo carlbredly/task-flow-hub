@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import type { Category, Task } from "@/hooks/useTasks";
+import type { WorkspaceMemberWithProfile } from "@/hooks/useWorkspaceMembers";
 import { cn } from "@/lib/utils";
 
 export interface TaskGroup {
@@ -34,6 +35,7 @@ interface Props {
   refetch: () => Promise<void>;
   subtaskStats: (parentId: string) => { done: number; total: number };
   layout?: "list" | "kanban";
+  members?: WorkspaceMemberWithProfile[];
 }
 
 function findContainerForTask(taskId: string, groups: TaskGroup[]): string | null {
@@ -73,12 +75,14 @@ function SortableTaskRow({
   category,
   subtaskStats,
   cardVariant,
+  members,
 }: {
   task: Task;
   groupKey: string;
   category?: Category;
   subtaskStats?: { done: number; total: number };
   cardVariant: "list" | "board";
+  members?: WorkspaceMemberWithProfile[];
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -109,6 +113,7 @@ function SortableTaskRow({
         subtaskStats={subtaskStats}
         variant={cardVariant}
         leadingSlot={handle}
+        members={members}
       />
     </div>
   );
@@ -122,6 +127,7 @@ export const TaskColumnsDnD = ({
   refetch,
   subtaskStats,
   layout = "list",
+  members,
 }: Props) => {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [saving, setSaving] = useState(false);
@@ -291,6 +297,7 @@ export const TaskColumnsDnD = ({
                     category={categories.find((c) => c.id === t.category_id)}
                     subtaskStats={subtaskStats(t.id)}
                     cardVariant={cardVariant}
+                    members={members}
                   />
                 ))}
                 <EmptyDropRow groupKey={String(g.key)} />

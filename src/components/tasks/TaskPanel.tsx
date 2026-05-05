@@ -4,6 +4,8 @@ import { useAppStore } from "@/stores/useAppStore";
 import { supabase } from "@/integrations/supabase/client";
 import { useTasks, type Task } from "@/hooks/useTasks";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspaceMembers } from "@/hooks/useWorkspaceMembers";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,10 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Trash2, Plus, MapPin, UserPlus2, Paperclip, X, MessageSquare,
-  Send, Clock, Tag, FileText, History,
+  Send, Clock, Tag, FileText, History, UserMinus2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -84,10 +85,19 @@ export const TaskPanel = () => {
   const { taskPanelOpenId, openTaskPanel, currentWorkspace } = useAppStore();
   const { tasks, categories, refetch } = useTasks();
   const { user } = useAuth();
+  const { members } = useWorkspaceMembers();
   const task = tasks.find((t) => t.id === taskPanelOpenId);
   const subtasks = tasks.filter((t) => t.parent_task_id === taskPanelOpenId);
   const [draft, setDraft] = useState<Task | null>(null);
   const [newSub, setNewSub] = useState("");
+
+  const myRole = members.find((m) => m.user_id === user?.id)?.role;
+  const canAssignOthers = myRole === "owner" || myRole === "admin";
+  const memberFor = (uid: string) => members.find((m) => m.user_id === uid);
+  const displayName = (uid: string) => {
+    const m = memberFor(uid);
+    return m?.profile?.display_name ?? m?.profile?.email ?? uid.slice(0, 8);
+  };
 
   // Comments
   const [comments, setComments] = useState<Comment[]>([]);
@@ -220,6 +230,25 @@ export const TaskPanel = () => {
     if (!user) return;
     await update({ assigned_to: [...(draft.assigned_to ?? []), user.id] });
   };
+
+  const removeAssignee = async (uid: string) => {
+    await update({ assigned_to: (draft.assigned_to ?? []).filter((id) => id !== uid) });
+  };
+
+  const addAssignee = async (uid: string) => {
+    if (!draft || (draft.assigned_to ?? []).includes(uid)) return;
+    const newList = [...(draft.assigned_to ?? []), uid];
+    await update({ assigned_to: newList });
+    await supabase.from("notifications").insert({
+      user_id: uid,
+      title: "Vous avez été assigné à une tâche",
+      message: draft.title,
+      type: "assignation",
+      task_id: draft.id,
+    });
+  };
+
+  const unassignedMembers = members.filter((m) => !(draft.assigned_to ?? []).includes(m.user_id));
 
   const remove = async () => {
     if (!confirm("Supprimer cette tâche ?")) return;
@@ -452,11 +481,71 @@ export const TaskPanel = () => {
             />
           </div>
 
-          {(!draft.assigned_to || draft.assigned_to.length === 0) && (
-            <Button onClick={assignSelf} variant="outline" className="w-full gap-1.5">
-              <UserPlus2 className="h-4 w-4" /> Assign to me
-            </Button>
-          )}
+          <div>
+            <Label className="mb-2 block text-xs text-muted-foreground">Assigné(s)</Label>
+            {(draft.assigned_to ?? []).length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {(draft.assigned_to ?? []).map((uid) => {
+                  const m = memberFor(uid);
+                  const name = displayName(uid);
+                  return (
+                    <span key={uid} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2 py-1 text-xs">
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={m?.profile?.avatar_url ?? undefined} />
+                        <AvatarFallback className="bg-primary/10 text-[8px] text-primary">{name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <span className="max-w-[120px] truncate">{name}</span>
+                      {canAssignOthers && uid !== user?.id && (
+                        <button type="button" onClick={() => removeAssignee(uid)} className="ml-0.5 text-muted-foreground hover:text-destructive">
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {canAssignOthers ? (
+              <div className="flex gap-2">
+                <Select onValueChange={(uid) => addAssignee(uid)} value="">
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Ajouter un membre…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unassignedMembers.length === 0 ? (
+                      <SelectItem value="_none" disabled>Tous les membres sont assignés</SelectItem>
+                    ) : (
+                      unassignedMembers.map((m) => (
+                        <SelectItem key={m.user_id} value={m.user_id}>
+                          <span className="inline-flex items-center gap-2">
+                            <Avatar className="h-5 w-5">
+                              <AvatarImage src={m.profile?.avatar_url ?? undefined} />
+                              <AvatarFallback className="bg-primary/10 text-[8px] text-primary">
+                                {(m.profile?.display_name ?? m.profile?.email ?? m.user_id).slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {m.profile?.display_name ?? m.profile?.email ?? m.user_id.slice(0, 8)}
+                          </span>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {user && !(draft.assigned_to ?? []).includes(user.id) && (
+                  <Button size="sm" variant="outline" onClick={assignSelf} className="shrink-0 gap-1.5" title="M'assigner">
+                    <UserPlus2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            ) : (
+              !(draft.assigned_to ?? []).includes(user?.id ?? "") && (
+                <Button onClick={assignSelf} variant="outline" className="w-full gap-1.5" size="sm">
+                  <UserPlus2 className="h-4 w-4" /> M'assigner
+                </Button>
+              )
+            )}
+          </div>
 
           {/* Sub-tasks */}
           <div>

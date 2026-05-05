@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskCreateDialog } from "@/components/tasks/TaskCreateDialog";
 import { cn } from "@/lib/utils";
 import { downloadCSV } from "@/lib/export";
+import { printTaskReport } from "@/lib/export-pdf";
 
 const sortTasksByOrder = (arr: Task[]) =>
   [...arr].sort((a, b) => {
@@ -113,6 +114,30 @@ const Tasks = () => {
     downloadCSV(rows, `taches-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
+  const exportPDF = () => {
+    const rows = tasks
+      .filter((t) => !t.parent_task_id)
+      .map((t) => {
+        const cat = categories.find((c) => c.id === t.category_id);
+        const assignees = (t.assigned_to ?? [])
+          .map((uid) => members.find((m) => m.user_id === uid))
+          .filter(Boolean)
+          .map((m) => m!.profile?.display_name ?? m!.profile?.email ?? "")
+          .join(", ");
+        return {
+          title: t.title,
+          status: t.status,
+          priority: t.priority,
+          category: cat?.name ?? "",
+          assignee: assignees,
+          due_date: t.due_date ? new Date(t.due_date).toLocaleDateString("fr") : "",
+          time_spent: t.time_spent ?? 0,
+          created_at: t.created_at,
+        };
+      });
+    printTaskReport(rows, currentWorkspace?.name ?? "Mon espace");
+  };
+
   return (
     <>
       <SEO title="Tâches" description="Gérez vos tâches en vue liste, Kanban, calendrier ou Gantt. Filtrez par catégorie, statut, priorité et assignation." url="https://taskflowhub.app/tasks" />
@@ -192,7 +217,10 @@ const Tasks = () => {
             </Button>
           </div>
           <Button variant="outline" onClick={exportCSV} className="rounded-xl gap-1.5" size="sm">
-            <Download className="h-4 w-4" /> Export CSV
+            <Download className="h-4 w-4" /> CSV
+          </Button>
+          <Button variant="outline" onClick={exportPDF} className="rounded-xl gap-1.5" size="sm">
+            <Download className="h-4 w-4" /> PDF
           </Button>
           <Button onClick={() => setCreateOpen(true)} className="rounded-xl shadow-sm">
             <Plus className="h-4 w-4" /> Créer une tâche

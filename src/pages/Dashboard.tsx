@@ -40,12 +40,20 @@ const Dashboard = () => {
   const stats = useMemo(() => {
     const active = tasks.filter((t) => t.status !== "done").length;
     const weekStart = startOfWeek(new Date());
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
     const completedWeek = tasks.filter(
       (t) => t.status === "done" && t.updated_at && isAfter(new Date(t.updated_at), weekStart),
     ).length;
+    const completedToday = tasks.filter(
+      (t) => t.status === "done" && t.updated_at && isAfter(new Date(t.updated_at), todayStart),
+    ).length;
     const pending = tasks.filter((t) => t.status === "todo" || t.status === "in_progress").length;
     const overdue = tasks.filter((t) => t.due_date && isPast(new Date(t.due_date)) && t.status !== "done").length;
-    return { active, completedWeek, pending, overdue };
+    const totalFocusSec = tasks.reduce((s, t) => s + ((t as any).time_spent ?? 0), 0);
+    const focusHours = Math.floor(totalFocusSec / 3600);
+    const focusMin = Math.floor((totalFocusSec % 3600) / 60);
+    return { active, completedWeek, completedToday, pending, overdue, totalFocusSec, focusHours, focusMin };
   }, [tasks]);
 
   const projectAnalytics = useMemo(() => {
@@ -216,7 +224,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
         <Card className="relative overflow-hidden rounded-2xl border-0 bg-primary p-5 text-primary-foreground shadow-lg">
           <div className="flex items-start justify-between">
             <span className="text-xs font-medium text-primary-foreground/85">Tâches actives</span>
@@ -224,7 +232,7 @@ const Dashboard = () => {
           </div>
           <div className="mt-3 text-3xl font-bold tracking-tight">{stats.active}</div>
           <p className="mt-2 flex items-center gap-1 text-[11px] text-primary-foreground/80">
-            <TrendingUp className="h-3 w-3" /> En cours dans l'espace
+            <TrendingUp className="h-3 w-3" /> En cours
           </p>
         </Card>
         <Card className="rounded-2xl border-border bg-card p-5 shadow-md">
@@ -233,7 +241,25 @@ const Dashboard = () => {
             <CheckCircle2 className="h-4 w-4 text-[hsl(145_55%_32%)]" />
           </div>
           <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">{stats.completedWeek}</div>
-          <p className="mt-2 text-[11px] text-muted-foreground">Depuis le début de la semaine</p>
+          <p className="mt-2 text-[11px] text-muted-foreground">Cette semaine</p>
+        </Card>
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-medium text-muted-foreground">Aujourd'hui</span>
+            <CheckCircle2 className="h-4 w-4 text-[hsl(145_55%_32%)]" />
+          </div>
+          <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">{stats.completedToday}</div>
+          <p className="mt-2 text-[11px] text-muted-foreground">Tâches terminées</p>
+        </Card>
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-medium text-muted-foreground">Temps focus</span>
+            <Clock className="h-4 w-4 text-[hsl(217_91%_50%)]" />
+          </div>
+          <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">
+            {stats.focusHours > 0 ? `${stats.focusHours}h` : `${stats.focusMin}min`}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">Minutes focusées</p>
         </Card>
         <Card className="rounded-2xl border-border bg-card p-5 shadow-md">
           <div className="flex items-start justify-between">

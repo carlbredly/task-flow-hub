@@ -34,7 +34,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const Tasks = () => {
   const { tasks, categories, loading, refetch } = useTasks();
-  const { groupBy, setGroupBy, view, setView, tasksSearch, setTasksSearch } = useAppStore();
+  const { groupBy, setGroupBy, view, setView, tasksSearch, setTasksSearch, currentWorkspace } = useAppStore();
   const { user } = useAuth();
   const { members, loading: membersLoading } = useWorkspaceMembers();
   const [createOpen, setCreateOpen] = useState(false);

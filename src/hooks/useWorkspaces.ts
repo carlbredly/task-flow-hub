@@ -17,7 +17,11 @@ export const useWorkspaces = () => {
   const { currentWorkspace, setCurrentWorkspace } = useAppStore();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setWorkspaces([]);
+      setLoading(false);
+      return;
+    }
     let cancel = false;
     (async () => {
       setLoading(true);

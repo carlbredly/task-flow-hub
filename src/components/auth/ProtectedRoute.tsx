@@ -1,11 +1,10 @@
-import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, useLocation } from "react-router-dom";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const loc = useLocation();
-  useEffect(() => {}, [user]);
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -13,6 +12,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
+
   if (!user) return <Navigate to="/auth" replace state={{ from: loc.pathname }} />;
+
   return <>{children}</>;
 };

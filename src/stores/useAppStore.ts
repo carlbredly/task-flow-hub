@@ -14,8 +14,10 @@ interface AppState {
   openTaskPanel: (id: string | null) => void;
   groupBy: "category" | "status";
   setGroupBy: (g: "category" | "status") => void;
-  view: "list" | "calendar";
-  setView: (v: "list" | "calendar") => void;
+  view: "list" | "kanban" | "calendar" | "gantt";
+  setView: (v: "list" | "kanban" | "calendar" | "gantt") => void;
+  tasksSearch: string;
+  setTasksSearch: (q: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -28,6 +30,8 @@ export const useAppStore = create<AppState>((set) => ({
   openTaskPanel: (id) => set({ taskPanelOpenId: id }),
   groupBy: "category",
   setGroupBy: (g) => set({ groupBy: g }),
-  view: "list",
+  view: "kanban",
   setView: (v) => set({ view: v }),
+  tasksSearch: "",
+  setTasksSearch: (q) => set({ tasksSearch: q }),
 }));

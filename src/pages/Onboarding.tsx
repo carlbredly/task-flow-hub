@@ -31,6 +31,14 @@ const Onboarding = () => {
       { workspace_id: data.id, name: "Personal", color: "#10B981", icon: "User" },
       { workspace_id: data.id, name: "Sport", color: "#F59E0B", icon: "Dumbbell" },
     ]);
+    // add owner as workspace member (DB trigger may have already done it)
+    const { error: memberErr } = await supabase.from("workspace_members").insert({
+      workspace_id: data.id,
+      user_id: user.id,
+      role: "owner",
+      visible_categories: ["all"],
+    });
+    if (memberErr && memberErr.code !== "23505") toast.error(memberErr.message);
     setCurrentWorkspace(data);
     nav("/", { replace: true });
   };

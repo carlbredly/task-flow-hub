@@ -4,6 +4,7 @@ import { useWorkspaces } from "@/hooks/useWorkspaces";
 
 export const WorkspaceGate = ({ children }: { children: ReactNode }) => {
   const { workspaces, loading } = useWorkspaces();
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -11,6 +12,8 @@ export const WorkspaceGate = ({ children }: { children: ReactNode }) => {
       </div>
     );
   }
+
   if (workspaces.length === 0) return <Navigate to="/onboarding" replace />;
+
   return <>{children}</>;
 };

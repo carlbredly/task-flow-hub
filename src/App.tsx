@@ -11,7 +11,11 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
-import { Calendar, Notifications, Settings } from "./pages/Stubs";
+import Calendar from "./pages/Calendar";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
+import Join from "./pages/Join";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,11 +24,12 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner theme="dark" position="top-right" />
+      <Sonner theme="light" position="top-right" />
       <BrowserRouter>
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/join/:token" element={<Join />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route element={<ProtectedRoute><WorkspaceGate><AppLayout /></WorkspaceGate></ProtectedRoute>}>
               <Route path="/" element={<Dashboard />} />
@@ -32,6 +37,7 @@ const App = () => (
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/help" element={<Help />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

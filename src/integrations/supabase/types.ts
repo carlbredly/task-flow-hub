@@ -169,6 +169,7 @@ export type Database = {
           parent_task_id: string | null
           priority: Database["public"]["Enums"]["task_priority"]
           reminder_at: string | null
+          sort_order?: number
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string
@@ -187,6 +188,7 @@ export type Database = {
           parent_task_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           reminder_at?: string | null
+          sort_order?: number
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string
@@ -205,6 +207,7 @@ export type Database = {
           parent_task_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           reminder_at?: string | null
+          sort_order?: number
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string

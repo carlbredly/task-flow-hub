@@ -1,12 +1,21 @@
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { TaskPanel } from "@/components/tasks/TaskPanel";
+import { useAppStore } from "@/stores/useAppStore";
 import { MobileBottomNav } from "./MobileBottomNav";
 
 export const AppLayout = () => {
   const location = useLocation();
+  const { openTaskPanel } = useAppStore();
+
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ taskId: string }>) => openTaskPanel(e.detail.taskId);
+    window.addEventListener("trackm:open-task" as any, handler as any);
+    return () => window.removeEventListener("trackm:open-task" as any, handler as any);
+  }, [openTaskPanel]);
 
   return (
     <div className="flex h-screen w-full bg-background p-0 md:p-3 md:pl-0">

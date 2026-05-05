@@ -16,6 +16,7 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import Join from "./pages/Join";
+import Focus from "./pages/Focus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/help" element={<Help />} />
+              <Route path="/focus" element={<Focus />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { Bell, Calendar, LayoutDashboard, ListChecks, Settings } from "lucide-react";
+import { Bell, Calendar, LayoutDashboard, ListChecks, Settings, Timer as TimerIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const items = [
   { to: "/", label: "Accueil", icon: LayoutDashboard },
   { to: "/tasks", label: "Tâches", icon: ListChecks },
+  { to: "/focus", label: "Focus", icon: TimerIcon },
   { to: "/calendar", label: "Agenda", icon: Calendar },
   { to: "/notifications", label: "Alertes", icon: Bell },
   { to: "/settings", label: "Réglages", icon: Settings },

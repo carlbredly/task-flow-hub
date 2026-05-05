@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import SEO from "@/components/seo/SEO";
 import { useTasks } from "@/hooks/useTasks";
-import { Search, LayoutList, Columns3, CalendarDays, GanttChart, Plus } from "lucide-react";
+import { Search, LayoutList, Columns3, CalendarDays, GanttChart, Plus, Download } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppStore } from "@/stores/useAppStore";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskCreateDialog } from "@/components/tasks/TaskCreateDialog";
 import { cn } from "@/lib/utils";
+import { downloadCSV } from "@/lib/export";
 
 const sortTasksByOrder = (arr: Task[]) =>
   [...arr].sort((a, b) => {
@@ -87,6 +88,30 @@ const Tasks = () => {
   const layoutMode = view === "kanban" ? "kanban" : "list";
   const displayMembers = members.slice(0, 5);
   const extraMembers = Math.max(0, members.length - 5);
+
+  const exportCSV = () => {
+    const rows = tasks
+      .filter((t) => !t.parent_task_id)
+      .map((t) => {
+        const cat = categories.find((c) => c.id === t.category_id);
+        const assignees = (t.assigned_to ?? [])
+          .map((uid) => members.find((m) => m.user_id === uid))
+          .filter(Boolean)
+          .map((m) => m!.profile?.display_name ?? m!.profile?.email ?? m!.user_id)
+          .join("; ");
+        return {
+          Titre: t.title,
+          Statut: STATUS_LABEL[t.status] ?? t.status,
+          Priorité: t.priority,
+          Catégorie: cat?.name ?? "",
+          "Date d'échéance": t.due_date ? new Date(t.due_date).toLocaleDateString("fr") : "",
+          Assigné: assignees,
+          "Temps passé": t.time_spent ? `${Math.floor((t.time_spent ?? 0) / 3600)}h${Math.floor(((t.time_spent ?? 0) % 3600) / 60)}m` : "",
+          Créée: new Date(t.created_at).toLocaleDateString("fr"),
+        };
+      });
+    downloadCSV(rows, `taches-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
 
   return (
     <>
@@ -166,6 +191,9 @@ const Tasks = () => {
               <Plus className="h-4 w-4" />
             </Button>
           </div>
+          <Button variant="outline" onClick={exportCSV} className="rounded-xl gap-1.5" size="sm">
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
           <Button onClick={() => setCreateOpen(true)} className="rounded-xl shadow-sm">
             <Plus className="h-4 w-4" /> Créer une tâche
           </Button>

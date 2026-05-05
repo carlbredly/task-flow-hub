@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, ListChecks, Calendar, Bell, Settings, LogOut, CheckCircle2, HelpCircle, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
+import { LayoutDashboard, ListChecks, Calendar, Bell, Settings, LogOut, CheckCircle2, HelpCircle, Moon, Sun, ChevronLeft, ChevronRight, Timer as TimerIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ const COLLAPSED_KEY = "trackm-sidebar-collapsed";
 const menuItems = [
   { to: "/", label: "Tableau de bord", icon: LayoutDashboard },
   { to: "/tasks", label: "Tâches", icon: ListChecks, badgeKey: "overdue" as const },
+  { to: "/focus", label: "Mode Focus", icon: TimerIcon },
   { to: "/calendar", label: "Calendrier", icon: Calendar },
   { to: "/notifications", label: "Notifications", icon: Bell },
 ];

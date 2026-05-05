@@ -6,10 +6,15 @@ import type { Database } from "@/integrations/supabase/types";
 
 export type NotificationItem = Database["public"]["Tables"]["notifications"]["Row"];
 
-export function requestNotificationPermission() {
-  if (!("Notification" in window)) return Promise.resolve("denied");
-  if (Notification.permission !== "default") return Promise.resolve(Notification.permission);
-  return Notification.requestPermission();
+export async function requestNotificationPermission() {
+  if (!("Notification" in window)) return "denied";
+  if (Notification.permission === "granted") return "granted";
+  if (Notification.permission !== "default") return Notification.permission;
+  const result = await Notification.requestPermission();
+  if (result === "granted") {
+    showBrowserNotification("Notifications activées", "Vous recevrez désormais les alertes Track'm en temps réel.");
+  }
+  return result;
 }
 
 export function showBrowserNotification(title: string, body?: string, taskId?: string) {

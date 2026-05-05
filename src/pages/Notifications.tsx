@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import SEO from "@/components/seo/SEO";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { BellRing, CheckCheck, Filter, Bell } from "lucide-react";
-import { useNotifications, requestNotificationPermission, showBrowserNotification } from "@/hooks/useNotifications";
+import { BellRing, CheckCheck, Filter } from "lucide-react";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useAppStore } from "@/stores/useAppStore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,10 +47,6 @@ const NotificationsPage = () => {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { requestNotificationPermission(); showBrowserNotification("Test Track'm", "Si vous voyez ceci, les notifications push fonctionnent !"); }}>
-            <Bell className="h-3.5 w-3.5" />
-            Tester
-          </Button>
           <Button variant="outline" className="gap-2" onClick={markAllAsRead}>
             <CheckCheck className="h-4 w-4" />
             Mark all as read

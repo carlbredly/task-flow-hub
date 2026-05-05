@@ -4,7 +4,6 @@ import { CheckCircle2, Clock, AlertTriangle, ListTodo, TrendingUp, Plus, Video, 
 import { isPast, isToday, startOfWeek, isAfter, isFuture, format } from "date-fns";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { TaskCreateDialog } from "@/components/tasks/TaskCreateDialog";
@@ -233,22 +232,27 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-5">
-        <Card className="flex max-h-[300px] flex-col rounded-2xl border border-border bg-card p-5 shadow-md lg:col-span-2">
-          <h3 className="shrink-0 text-sm font-semibold">Analyse projet</h3>
-          <div className="mt-auto grid grid-cols-7 items-end gap-3">
+      <div className="grid gap-4 lg:grid-cols-3">
+      <Card className="max-h-[300px] rounded-2xl border border-border bg-card p-5 shadow-md lg:col-span-2">
+          <h3 className="text-sm font-semibold">Analyse projet</h3>
+
+          <div className="grid grid-cols-7 items-end gap-3">
             {projectAnalytics.map((x, i) => {
               const isHighlighted = i === highlightedIndex && x.hasData;
               const isFilled = x.hasData;
+
+              // Sécuriser la valeur
               const ratio = Math.min(Math.max(x.ratio, 0), 100);
+
               return (
-                <div key={`${x.day}-${i}`} className="flex flex-col items-center">
+                <div key={`${x.day}-${i}`} className="flex flex-col justify-between">
                   <div className="relative flex h-28 items-end">
                     {isHighlighted && (
-                      <span className="absolute -top-6 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-sm">
+                      <span className="absolute -top-1 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-sm">
                         {ratio}%
                       </span>
                     )}
+
                     <div
                       className="w-10 rounded-full transition-all duration-300"
                       style={{
@@ -262,41 +266,16 @@ const Dashboard = () => {
                       }}
                     />
                   </div>
-                  <span className="mt-2 text-xs text-muted-foreground">{x.day}</span>
+
+                  <span className="mt-2 text-xs text-muted-foreground">
+                    {x.day}
+                  </span>
                 </div>
               );
             })}
           </div>
         </Card>
-
-        <Card className="flex flex-col rounded-2xl border-border bg-card p-5 shadow-md">
-          <h3 className="text-sm font-semibold">Rappels</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Prochaine échéance à venir</p>
-          {nextReminder ? (
-            <div className="mt-3 flex min-h-0 flex-1 flex-col">
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-sm font-medium text-foreground">{nextReminder.title}</p>
-                <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5 shrink-0" />
-                  {nextReminder.due_date && format(new Date(nextReminder.due_date), "d MMM yyyy · HH:mm")}
-                </p>
-              </div>
-              <Button
-                className="mt-3 w-full rounded-xl gap-2"
-                onClick={() => openTaskPanel(nextReminder.id)}
-                type="button"
-                size="sm"
-              >
-                <Video className="h-3.5 w-3.5" />
-                Ouvrir la tâche
-              </Button>
-            </div>
-          ) : (
-            <p className="mt-3 flex-1 text-sm text-muted-foreground">Aucun rappel à venir.</p>
-          )}
-        </Card>
-
-        <Card className="flex max-h-[300px] flex-col rounded-2xl border-border bg-card p-5 shadow-md lg:col-span-2">
+        <Card className="flex h-[500px] flex-col rounded-2xl border-border bg-card p-5 shadow-md">
           <div className="flex shrink-0 items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold">Projets & priorités</h3>
@@ -308,7 +287,7 @@ const Dashboard = () => {
               </Link>
             </Button>
           </div>
-          <ul className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto scrollbar-thin">
+          <ul className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-thin">
             {projectList.length === 0 && <li className="text-sm text-muted-foreground">Rien en cours — bravo !</li>}
             {projectList.map((t) => {
               const cat = catFor(t.category_id);
@@ -317,18 +296,19 @@ const Dashboard = () => {
                   <button
                     type="button"
                     onClick={() => openTaskPanel(t.id)}
-                    className="flex w-full items-start gap-2 rounded-xl border border-transparent px-2 py-1.5 text-left transition-colors hover:border-border hover:bg-muted/40"
+                    className="flex w-full items-start gap-3 rounded-xl border border-transparent px-2 py-2 text-left transition-colors hover:border-border hover:bg-muted/40"
                   >
                     <span
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-center text-xs font-medium text-white/50"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-center text-sm font-medium text-white/50"
                       style={{ background: cat?.color ?? "hsl(220 14% 80%)" }} 
                     >
                       {cat?.name?.slice(0,1).toUpperCase()}
                     </span>
+               
                     <div className="min-w-0 flex-1">
-                      <span className="line-clamp-2 text-xs font-medium text-foreground">{t.title}</span>
+                      <span className="line-clamp-2 text-sm font-medium text-foreground">{t.title}</span>
                       {t.due_date && (
-                        <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
                           {format(new Date(t.due_date), "d MMM yyyy")}
                         </span>
                       )}
@@ -339,53 +319,43 @@ const Dashboard = () => {
             })}
           </ul>
         </Card>
+      </div>
 
-        <Card className="rounded-2xl border-border bg-card p-5 shadow-md lg:col-span-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 className="text-sm font-semibold">Collaboration d'équipe</h3>
-              <p className="text-xs text-muted-foreground">Membres et tâche en cours</p>
-            </div>
-            <Button variant="outline" size="sm" className="rounded-xl" asChild>
-              <Link to="/settings">
-                <Plus className="h-3.5 w-3.5" /> Inviter
-              </Link>
-            </Button>
-          </div>
-          <div className="mt-3 space-y-2 max-h-[180px] overflow-y-auto scrollbar-thin">
-            {membersLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
-            {!membersLoading && memberRows.length === 0 && (
-              <p className="text-sm text-muted-foreground">Aucun membre pour cet espace.</p>
-            )}
-            {!membersLoading &&
-              memberRows.map(({ member: m, task: t }) => (
-                <div
-                  key={m.user_id}
-                  className="flex flex-col gap-2 rounded-xl border border-border bg-muted/20 px-2 py-2 sm:flex-row sm:items-center"
-                >
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <Avatar className="h-8 w-8 border-2 border-card shadow-sm">
-                      <AvatarImage src={m.profile?.avatar_url ?? undefined} />
-                      <AvatarFallback className="bg-primary/10 text-[10px] font-medium text-primary">
-                        {(m.profile?.display_name ?? m.profile?.email ?? m.user_id).slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium">{m.profile?.display_name ?? m.profile?.email ?? "Membre"}</p>
-                      <p className="truncate text-[11px] text-muted-foreground">{t?.title ?? "Aucune tâche assignée"}</p>
-                    </div>
-                  </div>
-                  <div className="shrink-0 sm:ml-auto">{statusBadge(t?.status ?? null)}</div>
-                </div>
-              ))}
-          </div>
+      
+
+      {/* Rappels & Progression */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="flex flex-col rounded-2xl border-border bg-card p-5 shadow-md lg:col-span-2">
+          <h3 className="text-sm font-semibold">Rappels</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Prochaine échéance à venir</p>
+          {nextReminder ? (
+            <>
+              <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+                <p className="font-medium text-foreground">{nextReminder.title}</p>
+                <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4 shrink-0" />
+                  {nextReminder.due_date && format(new Date(nextReminder.due_date), "d MMM yyyy · HH:mm")}
+                </p>
+              </div>
+              <Button
+                className="mt-4 w-full rounded-xl gap-2"
+                onClick={() => openTaskPanel(nextReminder.id)}
+                type="button"
+              >
+                <Video className="h-4 w-4" />
+                Ouvrir la tâche
+              </Button>
+            </>
+          ) : (
+            <p className="mt-6 flex-1 text-sm text-muted-foreground">Aucun rappel à venir. Ajoutez une date d’échéance à vos tâches.</p>
+          )}
         </Card>
 
-        <Card className="rounded-2xl border-border bg-card p-5 shadow-md">
+        <Card className=" rounded-2xl border-border bg-card p-5 shadow-md">
           <h3 className="text-sm font-semibold">Progression du workspace</h3>
           <p className="mt-1 text-xs text-muted-foreground">Tâches racines terminées</p>
           {workspaceProgress.total > 0 ? (
-            <div className="relative mx-auto mt-2 h-32 w-full max-w-[180px]">
+            <div className="relative mx-auto mt-2 h-44 w-full max-w-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -395,8 +365,8 @@ const Dashboard = () => {
                     cy="85%"
                     startAngle={180}
                     endAngle={0}
-                    innerRadius={48}
-                    outerRadius={65}
+                    innerRadius={58}
+                    outerRadius={78}
                     stroke="none"
                   >
                     {gaugeData.map((_, i) => (
@@ -406,25 +376,25 @@ const Dashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-end pb-1 text-center">
-                <span className="text-2xl font-bold tabular-nums text-foreground">{workspaceProgress.pct}%</span>
-                <span className="text-[10px] text-muted-foreground">tâches terminées</span>
+                <span className="text-3xl font-bold tabular-nums text-foreground">{workspaceProgress.pct}%</span>
+                <span className="text-[11px] text-muted-foreground">tâches terminées</span>
               </div>
             </div>
           ) : null}
           {workspaceProgress.total > 0 && (
-            <div className="mt-1 space-y-1.5">
-              <Progress value={workspaceProgress.pct} className="h-1.5 bg-muted" />
-              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[hsl(145_55%_28%)]" />
+            <div className="mt-2 space-y-2">
+              <Progress value={workspaceProgress.pct} className="h-2 bg-muted" />
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[hsl(145_55%_28%)]" />
                   Terminé ({workspaceProgress.done})
                 </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[hsl(217_91%_55%)]" />
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[hsl(217_91%_55%)]" />
                   En cours ({workspaceProgress.inProgress})
                 </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[hsl(210_18%_88%)]" />
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[hsl(210_18%_88%)]" />
                   À faire ({workspaceProgress.pending + workspaceProgress.delayed})
                 </span>
               </div>
@@ -432,42 +402,89 @@ const Dashboard = () => {
           )}
           {workspaceProgress.total === 0 && <p className="mt-4 text-sm text-muted-foreground">Créez des tâches pour suivre la progression.</p>}
         </Card>
+      </div>
+      
+      {/* Collaboration & minuteur */}
+      <div className="w-2/3 mx-auto grid gap-4 lg:grid-cols-5">
+        <Card className="rounded-2xl border-border bg-card p-5 shadow-md lg:col-span-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold">Collaboration d’équipe</h3>
+              <p className="text-xs text-muted-foreground">Membres et tâche en cours</p>
+            </div>
+            <Button variant="outline" size="sm" className="rounded-xl" asChild>
+              <Link to="/settings">
+                <Plus className="h-3.5 w-3.5" /> Inviter
+              </Link>
+            </Button>
+          </div>
+          <div className="mt-4 space-y-3">
+            {membersLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
+            {!membersLoading && memberRows.length === 0 && (
+              <p className="text-sm text-muted-foreground">Aucun membre pour cet espace.</p>
+            )}
+            {!membersLoading &&
+              memberRows.map(({ member: m, task: t }) => (
+                <div
+                  key={m.user_id}
+                  className="flex flex-col gap-3 rounded-xl border border-border bg-muted/20 px-3 py-3 sm:flex-row sm:items-center"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <Avatar className="h-10 w-10 border-2 border-card shadow-sm">
+                      <AvatarImage src={m.profile?.avatar_url ?? undefined} />
+                      <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
+                        {(m.profile?.display_name ?? m.profile?.email ?? m.user_id).slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{m.profile?.display_name ?? m.profile?.email ?? "Membre"}</p>
+                      <p className="truncate text-xs text-muted-foreground">{t?.title ?? "Aucune tâche assignée"}</p>
+                    </div>
+                  </div>
+                  <div className="shrink-0 sm:ml-auto">{statusBadge(t?.status ?? null)}</div>
+                </div>
+              ))}
+          </div>
+        </Card>
 
-        <Card className="relative overflow-hidden rounded-2xl border-0 bg-primary p-5 text-primary-foreground shadow-lg">
+        <Card className=" overflow-hidden rounded-2xl border-0 bg-primary p-6 text-primary-foreground shadow-lg lg:col-span-2">
           <div
-            className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10"
+            className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -bottom-10 left-1/4 h-40 w-40 rounded-full bg-white/5"
             aria-hidden
           />
           <h3 className="relative text-sm font-semibold text-primary-foreground">Minuteur</h3>
           <p className="relative mt-1 text-xs text-primary-foreground/80">Session de focus locale</p>
-          <p className="relative mt-4 text-center font-mono text-3xl font-semibold tabular-nums tracking-tight">
+          <p className="relative mt-6 text-center font-mono text-4xl font-semibold tabular-nums tracking-tight">
             {formatTimer(timerSec)}
           </p>
-          <div className="relative mt-4 flex justify-center gap-2">
+          <div className="relative mt-6 flex justify-center gap-3">
             <Button
               type="button"
               size="icon"
               variant="secondary"
-              className="h-10 w-10 rounded-full border-0 bg-white/20 text-primary-foreground hover:bg-white/30"
+              className="h-12 w-12 rounded-full border-0 bg-white/20 text-primary-foreground hover:bg-white/30"
               onClick={() => setTimerRunning((r) => !r)}
               aria-label={timerRunning ? "Pause" : "Démarrer"}
             >
-              {timerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+              {timerRunning ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
             </Button>
             <Button
               type="button"
               size="icon"
               variant="secondary"
-              className="h-10 w-10 rounded-full border-0 bg-destructive/90 text-destructive-foreground hover:bg-destructive"
+              className="h-12 w-12 rounded-full border-0 bg-destructive/90 text-destructive-foreground hover:bg-destructive"
               onClick={stopTimer}
               aria-label="Arrêter et réinitialiser"
             >
-              <Square className="h-3.5 w-3.5" />
+              <Square className="h-4 w-4" />
             </Button>
           </div>
         </Card>
       </div>
-
       <TaskCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );

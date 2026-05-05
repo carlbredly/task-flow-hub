@@ -66,16 +66,18 @@ export const useNotifications = () => {
       .channel(topic)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         (payload: any) => {
           fetchNotificationsRef.current();
-          try {
-            const data = payload?.new;
-            if (data?.title) {
-              showBrowserNotification(data.title, data.message ?? undefined, data.task_id ?? undefined);
+          if (payload.eventType === "INSERT") {
+            try {
+              const data = payload?.new;
+              if (data?.title) {
+                showBrowserNotification(data.title, data.message ?? undefined, data.task_id ?? undefined);
+              }
+            } catch (e) {
+              console.error("Browser notification error:", e);
             }
-          } catch (e) {
-            console.error("Browser notification error:", e);
           }
         },
       )

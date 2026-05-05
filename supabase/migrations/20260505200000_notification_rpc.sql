@@ -25,3 +25,6 @@ BEGIN
   VALUES (p_user_id, p_title, p_message, p_type, p_task_id);
 END;
 $$;
+
+-- Enable Realtime for the notifications table
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;

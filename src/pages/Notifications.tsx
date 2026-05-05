@@ -4,12 +4,14 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { BellRing, CheckCheck, Filter } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useAppStore } from "@/stores/useAppStore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const NotificationsPage = () => {
   const nav = useNavigate();
+  const { openTaskPanel } = useAppStore();
   const { notifications, loading, markAllAsRead, markAsRead } = useNotifications();
   const [typeFilter, setTypeFilter] = useState("all");
 
@@ -70,6 +72,7 @@ const NotificationsPage = () => {
                 }
                 if (notification.task_id) {
                   nav("/tasks");
+                  openTaskPanel(notification.task_id);
                 }
               }}
               className={`w-full rounded-xl border p-4 text-left transition ${

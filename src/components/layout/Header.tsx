@@ -75,7 +75,9 @@ export const Header = () => {
           >
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" aria-hidden />
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground shadow-sm" aria-label={`${unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}`}>
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
             )}
           </Button>
           <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-2 py-1 pr-3 shadow-sm sm:flex">

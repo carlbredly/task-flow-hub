@@ -67,11 +67,15 @@ export const useNotifications = () => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-        (payload) => {
+        (payload: any) => {
           fetchNotificationsRef.current();
-          const data = payload.new as Record<string, any> | null;
-          if (data && data.title) {
-            showBrowserNotification(data.title, data.message ?? undefined, data.task_id ?? undefined);
+          try {
+            const data = payload?.new;
+            if (data?.title) {
+              showBrowserNotification(data.title, data.message ?? undefined, data.task_id ?? undefined);
+            }
+          } catch (e) {
+            console.error("Browser notification error:", e);
           }
         },
       )

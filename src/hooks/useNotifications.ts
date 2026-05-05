@@ -6,16 +6,13 @@ import type { Database } from "@/integrations/supabase/types";
 
 export type NotificationItem = Database["public"]["Tables"]["notifications"]["Row"];
 
-let permRequested = false;
-async function requestNotifPermission() {
-  if (!("Notification" in window) || permRequested) return;
-  permRequested = true;
-  if (Notification.permission === "default") {
-    await Notification.requestPermission();
-  }
+export function requestNotificationPermission() {
+  if (!("Notification" in window)) return Promise.resolve("denied");
+  if (Notification.permission !== "default") return Promise.resolve(Notification.permission);
+  return Notification.requestPermission();
 }
 
-function showBrowserNotification(title: string, body?: string, taskId?: string) {
+export function showBrowserNotification(title: string, body?: string, taskId?: string) {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
   const n = new Notification(title, {
     body,
@@ -60,7 +57,6 @@ export const useNotifications = () => {
 
   useEffect(() => {
     fetchNotifications();
-    requestNotifPermission();
   }, [fetchNotifications]);
 
   useEffect(() => {
@@ -70,14 +66,13 @@ export const useNotifications = () => {
       .channel(topic)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
-          void fetchNotificationsRef.current().then(() => {
-            const newNotif = payload.new as NotificationItem | null;
-            if (newNotif && newNotif.user_id === user?.id && !newNotif.read) {
-              showBrowserNotification(newNotif.title, newNotif.message ?? undefined, newNotif.task_id ?? undefined);
-            }
-          });
+          fetchNotificationsRef.current();
+          const data = payload.new as Record<string, any> | null;
+          if (data && data.title) {
+            showBrowserNotification(data.title, data.message ?? undefined, data.task_id ?? undefined);
+          }
         },
       )
       .subscribe();

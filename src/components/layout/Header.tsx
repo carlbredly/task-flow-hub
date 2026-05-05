@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/stores/useAppStore";
 import { useEffect, useState } from "react";
 import { TaskCreateDialog } from "@/components/tasks/TaskCreateDialog";
-import { useNotifications } from "@/hooks/useNotifications";
+import { useNotifications, requestNotificationPermission } from "@/hooks/useNotifications";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -71,7 +71,7 @@ export const Header = () => {
             size="icon"
             className="relative h-10 w-10 rounded-xl"
             aria-label="Notifications"
-            onClick={() => navigate("/notifications")}
+            onClick={() => { requestNotificationPermission(); navigate("/notifications"); }}
           >
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (

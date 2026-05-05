@@ -504,28 +504,30 @@ const Dashboard = () => {
           <DialogHeader>
             <DialogTitle>Sélectionner une tâche</DialogTitle>
           </DialogHeader>
-          <div className="max-h-72 space-y-1 overflow-y-auto">
-            {rootTasks(tasks)
-              .filter((t) => t.status !== "done")
-              .map((t) => {
-                const cat = categories.find((c) => c.id === t.category_id);
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => selectTimerTask(t.id)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
-                  >
-                    <span
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium text-white/50"
-                      style={{ background: cat?.color ?? "hsl(220 14% 80%)" }}
+          <div className="overflow-hidden rounded-xl">
+            <div className="max-h-72 space-y-1 overflow-y-auto scrollbar-thin">
+              {rootTasks(tasks)
+                .filter((t) => t.status !== "done")
+                .map((t) => {
+                  const cat = categories.find((c) => c.id === t.category_id);
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => selectTimerTask(t.id)}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
                     >
-                      {cat?.name?.slice(0, 1).toUpperCase() ?? "?"}
-                    </span>
-                    <span className="min-w-0 flex-1 text-sm font-medium text-foreground">{t.title}</span>
-                  </button>
-                );
-              })}
+                      <span
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium text-white/50"
+                        style={{ background: cat?.color ?? "hsl(220 14% 80%)" }}
+                      >
+                        {cat?.name?.slice(0, 1).toUpperCase() ?? "?"}
+                      </span>
+                      <span className="min-w-0 flex-1 text-sm font-medium text-foreground">{t.title}</span>
+                    </button>
+                  );
+                })}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

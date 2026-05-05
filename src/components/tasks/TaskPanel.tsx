@@ -433,7 +433,7 @@ export const TaskPanel = () => {
               onChange={(e) => setDraft({ ...draft, description: e.target.value })}
               onBlur={(e) => update({ description: e.target.value })}
               rows={3}
-              className="bg-secondary/50"
+              className="bg-secondary/50 scrollbar-thin"
             />
           </div>
 
@@ -714,7 +714,7 @@ export const TaskPanel = () => {
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addComment(); } }}
                   placeholder="Écrire un commentaire..."
                   rows={2}
-                  className="min-h-0 resize-none bg-secondary/50 text-sm"
+                  className="min-h-0 resize-none bg-secondary/50 text-sm scrollbar-thin"
                 />
                 <Button
                   size="icon"
@@ -754,7 +754,7 @@ export const TaskPanel = () => {
                 }}
                 placeholder="Demander à l'IA..."
                 rows={2}
-                className="min-h-0 resize-none bg-secondary/50 text-sm"
+                className="min-h-0 resize-none bg-secondary/50 text-sm scrollbar-thin"
               />
               <Button
                 size="icon"

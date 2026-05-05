@@ -28,7 +28,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   taskPanelOpenId: null,
   openTaskPanel: (id) => set({ taskPanelOpenId: id }),
-  groupBy: "category",
+  groupBy: "status",
   setGroupBy: (g) => set({ groupBy: g }),
   view: "kanban",
   setView: (v) => set({ view: v }),

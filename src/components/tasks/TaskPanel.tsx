@@ -351,10 +351,10 @@ export const TaskPanel = () => {
 
   return (
     <Sheet open={!!taskPanelOpenId} onOpenChange={(o) => !o && openTaskPanel(null)}>
-        <SheetContent className="flex w-full flex-col gap-0 border-l border-border bg-card sm:max-w-lg">
-        <SheetHeader className="shrink-0 px-5 pt-5 pb-0">
+        <SheetContent className="flex w-full flex-col border-l border-border bg-card sm:max-w-lg">
+        <SheetHeader className="shrink-0">
           <SheetTitle className="sr-only">Task details</SheetTitle>
-          <div className="flex items-start gap-2 pr-6">
+          <div className="flex items-start gap-2">
             <Input
               value={draft.title}
               onChange={(e) => setDraft({ ...draft, title: e.target.value })}
@@ -374,8 +374,8 @@ export const TaskPanel = () => {
           </div>
         </SheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-hidden px-5">
-          <div className="h-full space-y-5 overflow-y-auto pr-1 scrollbar-thin">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full space-y-5 overflow-y-auto pr-2 scrollbar-thin">
           {/* Tags */}
           <div className="flex flex-wrap items-center gap-1.5">
             {taskTags.map((t) => (
@@ -433,7 +433,7 @@ export const TaskPanel = () => {
               onChange={(e) => setDraft({ ...draft, description: e.target.value })}
               onBlur={(e) => update({ description: e.target.value })}
               rows={3}
-              className="bg-secondary/50 scrollbar-thin"
+              className="bg-secondary/50 scrollbar-input"
             />
           </div>
 
@@ -714,7 +714,7 @@ export const TaskPanel = () => {
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addComment(); } }}
                   placeholder="Écrire un commentaire..."
                   rows={2}
-                  className="min-h-0 resize-none bg-secondary/50 text-sm scrollbar-thin"
+                  className="min-h-0 resize-none bg-secondary/50 text-sm scrollbar-input"
                 />
                 <Button
                   size="icon"
@@ -754,7 +754,7 @@ export const TaskPanel = () => {
                 }}
                 placeholder="Demander à l'IA..."
                 rows={2}
-                className="min-h-0 resize-none bg-secondary/50 text-sm scrollbar-thin"
+                className="min-h-0 resize-none bg-secondary/50 text-sm scrollbar-input"
               />
               <Button
                 size="icon"

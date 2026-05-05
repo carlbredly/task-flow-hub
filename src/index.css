@@ -171,4 +171,20 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--foreground) / 0.25);
   }
+
+  /* Same as scrollbar-thin but without scrollbar-gutter (for textareas) */
+  .scrollbar-input::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-input::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-input::-webkit-scrollbar-thumb {
+    background: hsl(var(--foreground) / 0.15);
+    border-radius: 8px;
+  }
+  .scrollbar-input::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground) / 0.25);
+  }
 }

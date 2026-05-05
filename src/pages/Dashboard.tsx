@@ -1,7 +1,8 @@
 import SEO from "@/components/seo/SEO";
 import { useTasks } from "@/hooks/useTasks";
+import { useAi } from "@/hooks/useAi";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, Clock, AlertTriangle, ListTodo, TrendingUp, Plus, Video, Pause, Square, Play, Target } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, ListTodo, TrendingUp, Plus, Video, Pause, Square, Play, Target, Sparkles, Bot } from "lucide-react";
 import { isPast, isToday, startOfWeek, isAfter, isFuture, format } from "date-fns";
 import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
 import { useMemo, useState, useEffect, useCallback } from "react";
@@ -36,6 +37,19 @@ const Dashboard = () => {
   const { openTaskPanel } = useAppStore();
   const { members, loading: membersLoading } = useWorkspaceMembers();
   const [createOpen, setCreateOpen] = useState(false);
+  const ai = useAi();
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [aiFocus, setAiFocus] = useState<{ taskId: string; reason: string } | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const loadAi = async () => {
+    if (!tasks.length || aiLoading) return;
+    setAiLoading(true);
+    const [s, f] = await Promise.all([ai.dailySummary(tasks), ai.focusRecommendation(tasks)]);
+    if (s) setAiSummary(s);
+    if (f) setAiFocus(f);
+    setAiLoading(false);
+  };
 
   const stats = useMemo(() => {
     const active = tasks.filter((t) => t.status !== "done").length;
@@ -213,7 +227,29 @@ const Dashboard = () => {
       <SEO title="Tableau de bord" description="Vue d'ensemble de votre espace de travail : tâches actives, progression, rappels et collaboration d'équipe." url="https://taskflowhub.app/" />
       <div className="mx-auto max-w-7xl space-y-6 p-4 pb-24 animate-fade-in sm:p-6 sm:pb-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div />
+        <div className="min-w-0 flex-1">
+          {aiLoading ? (
+            <p className="text-sm text-muted-foreground animate-pulse">Analyse en cours…</p>
+          ) : aiSummary ? (
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground leading-relaxed">{aiSummary}</p>
+              {aiFocus && (
+                <button
+                  type="button"
+                  onClick={() => openTaskPanel(aiFocus.taskId)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary/[0.08] px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/[0.12] transition-colors"
+                >
+                  <Target className="h-3 w-3" />
+                  {aiFocus.reason}
+                </button>
+              )}
+            </div>
+          ) : tasks.length > 0 ? (
+            <button type="button" onClick={loadAi} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Sparkles className="h-3.5 w-3.5" /> Résumé IA
+            </button>
+          ) : null}
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setCreateOpen(true)} className="rounded-xl shadow-md">
             <Plus className="h-4 w-4" /> Nouvelle tâche

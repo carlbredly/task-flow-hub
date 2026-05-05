@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTasks, type Task } from "@/hooks/useTasks";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspaceMembers } from "@/hooks/useWorkspaceMembers";
+import { useAi } from "@/hooks/useAi";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
   Trash2, Plus, MapPin, UserPlus2, Paperclip, X, MessageSquare,
-  Send, Clock, Tag, FileText, History, UserMinus2,
+  Send, Clock, Tag, FileText, History, UserMinus2, Sparkles, Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -120,6 +121,11 @@ export const TaskPanel = () => {
 
   // Custom statuses
   const [statuses, setStatuses] = useState<WorkspaceStatus[]>([]);
+
+  // AI
+  const ai = useAi();
+  const [aiChatMsg, setAiChatMsg] = useState("");
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
 
   useEffect(() => { setDraft(task ?? null); }, [task?.id]);
 
@@ -348,12 +354,24 @@ export const TaskPanel = () => {
       <SheetContent className="flex w-full flex-col overflow-hidden border-l border-border bg-card sm:max-w-lg">
         <SheetHeader className="shrink-0">
           <SheetTitle className="sr-only">Task details</SheetTitle>
-          <Input
-            value={draft.title}
-            onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-            onBlur={(e) => update({ title: e.target.value })}
-            className="border-0 bg-transparent text-xl font-semibold px-0 focus-visible:ring-0"
-          />
+          <div className="flex items-start gap-2">
+            <Input
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              onBlur={(e) => update({ title: e.target.value })}
+              className="border-0 bg-transparent text-xl font-semibold px-0 focus-visible:ring-0"
+            />
+            <Button type="button" size="icon" variant="ghost" className="mt-1 h-7 w-7 shrink-0 rounded-lg"
+              disabled={ai.loading || !draft.title}
+              onClick={async () => {
+                const r = await ai.reformulateTitle(draft.title);
+                if (r) setDraft({ ...draft, title: r });
+              }}
+              title="Améliorer le titre"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </SheetHeader>
 
         <div className="flex-1 space-y-5 overflow-y-auto px-1 scrollbar-thin">
@@ -396,7 +414,19 @@ export const TaskPanel = () => {
 
           {/* Description */}
           <div>
-            <Label className="text-xs text-muted-foreground">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">Description</Label>
+              <Button type="button" size="icon" variant="ghost" className="h-6 w-6 rounded-lg"
+                disabled={ai.loading || !draft.title}
+                onClick={async () => {
+                  const r = await ai.generateDescription(draft.title, draft.description);
+                  if (r) update({ description: r });
+                }}
+                title="Générer la description"
+              >
+                <Sparkles className="h-3 w-3" />
+              </Button>
+            </div>
             <Textarea
               value={draft.description ?? ""}
               onChange={(e) => setDraft({ ...draft, description: e.target.value })}
@@ -550,9 +580,31 @@ export const TaskPanel = () => {
 
           {/* Sub-tasks */}
           <div>
-            <Label className="mb-2 block text-xs text-muted-foreground">
-              Sous-tâches {subtasks.length > 0 && `(${subtasks.filter((s) => s.status === "done").length}/${subtasks.length})`}
-            </Label>
+            <div className="mb-2 flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">
+                Sous-tâches {subtasks.length > 0 && `(${subtasks.filter((s) => s.status === "done").length}/${subtasks.length})`}
+              </Label>
+              <Button type="button" size="icon" variant="ghost" className="h-6 w-6 rounded-lg"
+                disabled={ai.loading || !draft.title}
+                onClick={async () => {
+                  const r = await ai.generateSubtasks(draft.title, draft.description);
+                  if (r) {
+                    for (const sub of r) {
+                      await supabase.from("tasks").insert({
+                        workspace_id: draft.workspace_id,
+                        parent_task_id: draft.id,
+                        title: sub,
+                        created_by: user?.id,
+                      });
+                    }
+                    refetch();
+                  }
+                }}
+                title="Générer des sous-tâches"
+              >
+                <Sparkles className="h-3 w-3" />
+              </Button>
+            </div>
             <div className="space-y-1.5">
               {subtasks.map((s) => (
                 <div key={s.id} className="flex items-center gap-2 rounded-md bg-secondary/40 px-2 py-1.5">
@@ -673,6 +725,50 @@ export const TaskPanel = () => {
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* AI Chat */}
+          <div>
+            <Label className="mb-2 block text-xs text-muted-foreground flex items-center gap-1.5">
+              <Bot className="h-3 w-3" /> Assistant IA
+            </Label>
+            {aiAnswer && (
+              <div className="mb-2 rounded-xl border border-primary/20 bg-primary/[0.04] p-3 text-sm text-foreground">
+                {aiAnswer}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Textarea
+                value={aiChatMsg}
+                onChange={(e) => setAiChatMsg(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter" && !e.shiftKey && aiChatMsg.trim() && !ai.loading) {
+                    e.preventDefault();
+                    setAiAnswer("Réflexion…");
+                    const r = await ai.chat(draft.title, aiChatMsg.trim(), draft.description);
+                    setAiAnswer(r ?? "Je n'ai pas pu répondre. Vérifie la clé API DeepSeek.");
+                    setAiChatMsg("");
+                  }
+                }}
+                placeholder="Demander à l'IA..."
+                rows={2}
+                className="min-h-0 resize-none bg-secondary/50 text-sm"
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="shrink-0 self-end"
+                disabled={!aiChatMsg.trim() || ai.loading}
+                onClick={async () => {
+                  setAiAnswer("Réflexion…");
+                  const r = await ai.chat(draft.title, aiChatMsg.trim(), draft.description);
+                  setAiAnswer(r ?? "Je n'ai pas pu répondre. Vérifie la clé API DeepSeek.");
+                  setAiChatMsg("");
+                }}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 

@@ -351,7 +351,7 @@ export const TaskPanel = () => {
 
   return (
     <Sheet open={!!taskPanelOpenId} onOpenChange={(o) => !o && openTaskPanel(null)}>
-      <SheetContent className="flex w-full flex-col overflow-hidden border-l border-border bg-card sm:max-w-lg">
+        <SheetContent className="flex w-full flex-col border-l border-border bg-card sm:max-w-lg">
         <SheetHeader className="shrink-0">
           <SheetTitle className="sr-only">Task details</SheetTitle>
           <div className="flex items-start gap-2">
@@ -374,7 +374,8 @@ export const TaskPanel = () => {
           </div>
         </SheetHeader>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-1 scrollbar-thin">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full space-y-5 overflow-y-auto pr-2 scrollbar-thin">
           {/* Tags */}
           <div className="flex flex-wrap items-center gap-1.5">
             {taskTags.map((t) => (
@@ -777,6 +778,7 @@ export const TaskPanel = () => {
               <Trash2 className="mr-2 h-4 w-4" /> Supprimer
             </Button>
           </div>
+        </div>
         </div>
       </SheetContent>
     </Sheet>

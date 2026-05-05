@@ -92,7 +92,7 @@ const Focus = () => {
             {!timerTaskId ? (
               <div className="space-y-2">
                 <p className="text-center text-sm font-medium text-muted-foreground">Sélectionnez une tâche à travailler</p>
-                <div className="max-h-64 space-y-1 overflow-y-auto rounded-2xl border border-border bg-card p-2">
+                <div className="max-h-64 space-y-1 overflow-y-auto rounded-2xl border border-border bg-card p-2 scrollbar-thin">
                   {rootTasks.map((t) => {
                     const cat = categories.find((c) => c.id === t.category_id);
                     return (

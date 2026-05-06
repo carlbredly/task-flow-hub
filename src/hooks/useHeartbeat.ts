@@ -9,8 +9,10 @@ export function useHeartbeat() {
   useEffect(() => {
     if (!user) return;
 
-    const beat = () => {
-      (supabase.rpc as any)("heartbeat").catch(() => {});
+    const beat = async () => {
+      try {
+        await (supabase.rpc as any)("heartbeat");
+      } catch {}
     };
 
     beat();

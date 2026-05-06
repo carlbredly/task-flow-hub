@@ -1,0 +1,29 @@
+{
+  "name": "Track'm — Gestion de tâches collaborative",
+  "short_name": "Track'm",
+  "description": "Gestion de tâches intelligente et collaborative avec sous-tâches, calendrier et mode focus.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0F",
+  "theme_color": "#0A0A0F",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "categories": ["productivity", "organization"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

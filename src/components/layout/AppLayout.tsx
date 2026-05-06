@@ -5,11 +5,13 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { TaskPanel } from "@/components/tasks/TaskPanel";
 import { useAppStore } from "@/stores/useAppStore";
+import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { MobileBottomNav } from "./MobileBottomNav";
 
 export const AppLayout = () => {
   const location = useLocation();
   const { openTaskPanel } = useAppStore();
+  useHeartbeat();
 
   useEffect(() => {
     const handler = (e: CustomEvent<{ taskId: string }>) => openTaskPanel(e.detail.taskId);

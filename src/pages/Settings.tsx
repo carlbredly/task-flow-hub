@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Eye, EyeOff, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isOnline } from "@/hooks/useHeartbeat";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -222,9 +223,17 @@ const SettingsPage = () => {
                 return (
                   <div key={member.id} className="rounded-lg border border-white/5 p-3">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <p className="text-sm font-medium">{member.profile?.display_name ?? member.profile?.email ?? member.user_id}</p>
-                        <p className="text-xs text-muted-foreground">{member.profile?.email ?? member.user_id}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="relative inline-flex shrink-0">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                            {(member.profile?.display_name ?? member.profile?.email ?? member.user_id).slice(0, 2).toUpperCase()}
+                          </div>
+                          <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card ${isOnline(member.profile?.last_seen) ? "bg-green-500" : "bg-muted-foreground/30"}`} />
+                        </span>
+                        <div>
+                          <p className="text-sm font-medium">{member.profile?.display_name ?? member.profile?.email ?? member.user_id}</p>
+                          <p className="text-xs text-muted-foreground">{member.profile?.email ?? member.user_id}</p>
+                        </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Select value={member.role} onValueChange={(value) => updateMemberRole(member.id, value as typeof member.role)}>

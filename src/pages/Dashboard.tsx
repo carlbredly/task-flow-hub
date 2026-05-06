@@ -1,6 +1,7 @@
 import SEO from "@/components/seo/SEO";
 import { useTasks } from "@/hooks/useTasks";
 import { useAi } from "@/hooks/useAi";
+import { isOnline } from "@/hooks/useHeartbeat";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Clock, AlertTriangle, ListTodo, TrendingUp, Plus, Video, Pause, Square, Play, Target, Sparkles, Bot } from "lucide-react";
 import { isPast, isToday, startOfWeek, isAfter, isFuture, format } from "date-fns";
@@ -458,12 +459,15 @@ const Dashboard = () => {
                   className="flex flex-col gap-3 rounded-xl border border-border bg-muted/20 px-3 py-3 sm:flex-row sm:items-center"
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <Avatar className="h-10 w-10 border-2 border-card shadow-sm">
-                      <AvatarImage src={m.profile?.avatar_url ?? undefined} />
-                      <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-                        {(m.profile?.display_name ?? m.profile?.email ?? m.user_id).slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <span className="relative inline-flex">
+                      <Avatar className="h-10 w-10 border-2 border-card shadow-sm">
+                        <AvatarImage src={m.profile?.avatar_url ?? undefined} />
+                        <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
+                          {(m.profile?.display_name ?? m.profile?.email ?? m.user_id).slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card ${isOnline(m.profile?.last_seen) ? "bg-green-500" : "bg-muted-foreground/30"}`} />
+                    </span>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{m.profile?.display_name ?? m.profile?.email ?? "Membre"}</p>
                       <p className="truncate text-xs text-muted-foreground">{t?.title ?? "Aucune tâche assignée"}</p>
